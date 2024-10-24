@@ -1,0 +1,69 @@
+#cloud-config
+write_files:
+  - path: /etc/netplan/99-eth1.yaml
+    permissions: '0600'
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth1:
+            dhcp4: false
+            dhcp6: false
+            addresses:
+              - 192.168.100.50/24
+
+  - path: /home/ubuntu/setup_vm.sh
+    permissions: '0755'
+    content: |
+      # Install the net-tools package
+      sudo apt install net-tools
+      # Enable password auth in sshd so we can use ssh-copy-id
+      sudo sed -i 's/#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
+      sudo sed -i 's/KbdInteractiveAuthentication no/KbdInteractiveAuthentication yes/' /etc/ssh/sshd_config
+      sudo systemctl restart ssh
+      # Set password for ubuntu user (it's something random by default)
+      echo 'ubuntu:ubuntu' | sudo chpasswd
+      # sysctl params required by setup, params persist across reboots
+      cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+      net.ipv4.ip_forward = 1
+      EOF
+      sudo sysctl --system
+
+  - path: /home/ubuntu/install_containerd.sh
+    permissions: '0755'
+    content: |
+      # Step 1: Installing containerd
+      sudo wget https://github.com/containerd/containerd/releases/download/v1.7.23/containerd-1.7.23-linux-amd64.tar.gz
+      sudo tar Cxzvf /usr/local containerd-1.7.23-linux-amd64.tar.gz
+      sudo wget -P /usr/local/lib/systemd/system/ https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+      sudo systemctl daemon-reload
+      sudo systemctl enable --now containerd
+      Step 2: Installing runc
+      sudo wget https://github.com/opencontainers/runc/releases/download/v1.2.0/runc.amd64
+      sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+      Step 3: Installing CNI plugins
+      sudo wget https://github.com/containernetworking/plugins/releases/download/v1.6.0/cni-plugins-linux-amd64-v1.6.0.tgz
+      sudo mkdir -p /opt/cni/bin
+      sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.6.0.tgz
+      sudo containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml
+      sudo systemctl restart containerd
+
+  - path: /home/ubuntu/install_k8s.sh
+    permissions: '0755'
+    content: |
+      sudo apt-get update
+      # apt-transport-https may be a dummy package; if so, you can skip that package
+      sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+      # If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
+      # sudo mkdir -p -m 755 /etc/apt/keyrings
+      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      # This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      sudo apt-get update
+      sudo apt-get install -y kubelet kubeadm kubectl
+      sudo apt-mark hold kubelet kubeadm kubectl
+      sudo systemctl enable --now kubelet
+ 
+runcmd:
+  - sudo netplan apply
+  - /home/ubuntu/setup_vm.sh
