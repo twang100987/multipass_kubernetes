@@ -10,7 +10,7 @@ write_files:
             dhcp4: false
             dhcp6: false
             addresses:
-              - 192.168.100.50/24
+              - 192.168.100.60/24
 
   - path: /home/ubuntu/setup_vm.sh
     permissions: '0755'
@@ -67,3 +67,5 @@ write_files:
 runcmd:
   - sudo netplan apply
   - /home/ubuntu/setup_vm.sh
+  - /home/ubuntu/install_containerd.sh
+  - /home/ubuntu/install_k8s.sh

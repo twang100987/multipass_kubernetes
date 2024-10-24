@@ -17,7 +17,7 @@ In my case, i use multipass with Hyper-V.
 - Step 2: Launch an instance with virtual switch created under the Hyper-v. You will find one additional eth1.
     ```console
     # You can choose your preferred linux distribution. Here I used Ubuntu 24.04 LTS with the name noble.
-    multipass launch noble -n controlplane -c 2 -m 4G -d 10G --network name=multipass,mode=manual --cloud-init cloud-init.yaml
+    multipass launch noble -n controlplane -c 2 -m 4G -d 10G --network name=multipass,mode=manual --cloud-init .\Documents\K8S\cloud-init.yaml
     ```
 
 
