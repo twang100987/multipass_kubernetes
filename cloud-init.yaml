@@ -13,7 +13,6 @@ write_files:
               - 192.168.100.60/24
 
   - path: /home/ubuntu/setup_vm.sh
-    permissions: '0755'
     content: |
       # Install the net-tools package
       sudo apt install net-tools
@@ -49,7 +48,6 @@ write_files:
       sudo systemctl restart containerd
 
   - path: /home/ubuntu/install_k8s.sh
-    permissions: '0755'
     content: |
       sudo apt-get update
       # apt-transport-https may be a dummy package; if so, you can skip that package
