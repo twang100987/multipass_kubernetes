@@ -64,6 +64,6 @@ write_files:
  
 runcmd:
   - sudo netplan apply
-  - /home/ubuntu/setup_vm.sh
-  - /home/ubuntu/install_containerd.sh
-  - /home/ubuntu/install_k8s.sh
+  #- /home/ubuntu/setup_vm.sh
+  #- /home/ubuntu/install_containerd.sh
+  #- /home/ubuntu/install_k8s.sh
