@@ -44,6 +44,7 @@ write_files:
       sudo wget https://github.com/containernetworking/plugins/releases/download/v1.6.0/cni-plugins-linux-amd64-v1.6.0.tgz
       sudo mkdir -p /opt/cni/bin
       sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.6.0.tgz
+      sudo mkdir -p /etc/containerd
       sudo containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml
       sudo systemctl restart containerd
 
